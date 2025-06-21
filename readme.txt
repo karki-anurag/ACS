@@ -249,8 +249,4 @@ Follow these steps to start both the backend and frontend servers:
 * More robust password policy enforcement on the backend.
 * Implement a rate-limiting mechanism for login attempts and OTP requests.
 
-<<<<<<< HEAD
 ---
-=======
----
->>>>>>> ff465082a2f57ec9624105a4436d1b34d19d6f97
