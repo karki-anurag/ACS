@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - Library System</title>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <form id="loginForm" onsubmit="return loginUser(event)">
+    <h2>Login</h2>
+    <input type="email" id="login_email" required placeholder="Email">
+    <input type="password" id="login_password" required placeholder="Password">
+    
+    <div class="cf-turnstile" data-sitekey="0x4AAAAAABho5hPgTPE5grJY"></div>
+    
+    <button type="submit">Login</button> 
+    
+    <p id="loginErrorMessage" style="color: red;"></p>
+
+    <p style="margin-top: 15px; font-size: 0.9em;">
+        <a href="forgot_password.html" 
+           style="color: #daa520; text-decoration: none; font-weight: 500;">Forgot Password?</a>
+    </p>
+
+    <button type="button" onclick="window.location.href='register.html'" style="
+        background-color: #5d4037; /* Dark brown for navigation, matching the 'Go to Login' button style */
+        margin-top: 10px; /* Less margin than the primary submit button */
+    ">Register</button>
+
+  </form>
+
+  <div id="otpSection" style="display:none;">
+    <p id="otpMessage"></p>
+    <input type="text" id="otp" placeholder="Enter OTP">
+    <button onclick="verifyOTP()">Verify OTP</button>
+    <p id="otpErrorMessage" style="color: red;"></p>
+  </div>
+
+  <script src="js/login.js"></script>
+</body>
+</html>

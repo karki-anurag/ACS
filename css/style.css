@@ -1,0 +1,220 @@
+/* style.css */
+
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap'); /* Adding Poppins font */
+
+body {
+    font-family: 'Poppins', Arial, sans-serif; /* Using Poppins */
+    /* Ensure this is correctly pointing to your library background image */
+    background-image: url('/static/images/background.jpg'); /* Verify 'background.jpg' is in static/images/ */
+    background-size: cover; /* Make sure the image covers the entire background */
+    background-position: center; /* Center the background image */
+    background-repeat: no-repeat;
+    /* Remove any conflicting background properties (like linear-gradient) */
+    /* If you prefer a solid dark background instead of an image, use: */
+    /* background: #2c3e50; */ /* Dark bluish-grey */
+
+    display: flex; /* Use flexbox for centering */
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* Full viewport height */
+    margin: 0;
+    color: #fdfaf6; /* Lighter text color for readability on darker backgrounds */
+    box-sizing: border-box; /* Include padding in element's total width and height */
+}
+
+form {
+    background-color: rgba(30, 20, 10, 0.8); /* Dark brown, semi-transparent */
+    padding: 40px; /* Increased padding */
+    border-radius: 15px; /* More rounded corners */
+    max-width: 450px; /* Slightly wider forms */
+    width: 90%; /* Responsive width */
+    box-shadow: 0 15px 30px rgba(0,0,0,0.5); /* Stronger shadow for depth */
+    text-align: center; /* Center form content */
+    border: 1px solid rgba(184, 134, 11, 0.5); /* Subtle gold/brass border */
+    backdrop-filter: blur(8px); /* Increased blur for frosted glass effect */
+    -webkit-backdrop-filter: blur(8px);
+}
+
+h2 {
+    color: #daa520; /* Gold color for headings */
+    margin-bottom: 25px;
+    font-weight: 600;
+    font-size: 1.8em;
+}
+
+input {
+    width: calc(100% - 20px); /* Account for padding */
+    padding: 12px 10px; /* More padding */
+    margin-top: 15px; /* More margin */
+    border-radius: 8px; /* Slightly more rounded */
+    border: 1px solid #5d4037; /* Dark brown border */
+    font-size: 1em;
+    background-color: rgba(255, 255, 255, 0.1); /* Slightly transparent input fields */
+    color: #fdfaf6; /* Light text color in inputs */
+    transition: all 0.3s ease; /* Smooth transitions */
+}
+
+input::placeholder { /* Style for placeholder text */
+    color: #ccc;
+    opacity: 0.8;
+}
+
+input:focus {
+    border-color: #daa520; /* Gold highlight color on focus */
+    box-shadow: 0 0 0 3px rgba(218, 165, 32, 0.3); /* Subtle gold glow */
+    outline: none; /* Remove default outline */
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 25px; /* More margin above button */
+    border-radius: 8px;
+    border: none; /* Remove border */
+    background-color: #8b0000; /* Deep burgundy for action */
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth transitions */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3); /* Button shadow */
+}
+
+button:hover {
+    background-color: #660000; /* Darker burgundy on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+}
+
+button:active {
+    transform: translateY(0); /* Return on click */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+#strengthIndicator {
+    margin-top: 15px;
+    font-weight: bold;
+    font-size: 0.95em;
+    text-align: left; /* Align strength indicator text left */
+    padding-left: 5px; /* Small padding */
+    color: #fdfaf6; /* Lighter color for strength indicator */
+}
+
+/* Adjust strength indicator colors for dark theme */
+#strengthIndicator[style*="color: rgb(255, 77, 77)"] { color: #ff6666 !important; } /* Very Weak */
+#strengthIndicator[style*="color: rgb(255, 148, 77)"] { color: #ff9966 !important; } /* Weak */
+#strengthIndicator[style*="color: rgb(255, 255, 102)"] { color: #ffff99 !important; } /* Moderate */
+#strengthIndicator[style*="color: rgb(153, 230, 153)"] { color: #99ff99 !important; } /* Strong */
+#strengthIndicator[style*="color: rgb(102, 255, 153)"] { color: #66ffcc !important; } /* Very Strong */
+#strengthIndicator[style*="color: rgb(204, 204, 204)"] { color: #cccccc !important; } /* Default */
+
+
+p#successMessage {
+    color: #2e8b57; /* Muted green for success */
+    margin-top: 20px;
+    font-weight: 600;
+}
+
+p#successMessage a {
+    color: #daa520; /* Gold for links */
+    text-decoration: none;
+}
+
+p#successMessage a:hover {
+    text-decoration: underline;
+}
+
+/* Specific styles for the "Go to Login" button */
+form button[onclick*="index.html"] {
+    background-color: #5d4037; /* Dark brown for navigation buttons */
+    margin-top: 10px; /* Less margin than submit button */
+}
+
+form button[onclick*="index.html"]:hover {
+    background-color: #4e342e;
+}
+
+/* Cloudflare Turnstile styling adjustment - often hard to style deeply */
+.cf-turnstile {
+    margin-top: 20px;
+    display: flex; /* Center the widget if it's smaller */
+    justify-content: center;
+}
+
+/* OTP Section specific styles */
+#otpSection {
+    background-color: rgba(30, 20, 10, 0.8); /* Same dark transparent background as form */
+    padding: 40px;
+    border-radius: 15px;
+    max-width: 450px;
+    width: 90%;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+    text-align: center;
+    border: 1px solid rgba(184, 134, 11, 0.5);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    margin: auto; /* Center it */
+}
+
+#otpSection input {
+    margin-bottom: 15px;
+    background-color: rgba(255, 255, 255, 0.1); /* Transparent inputs */
+    color: #fdfaf6; /* Light text in inputs */
+}
+
+#otpMessage {
+    color: #fdfaf6; /* Lighter color for OTP message */
+    font-size: 1.1em;
+    margin-bottom: 20px;
+    font-weight: 500;
+}
+
+/* Dashboard Container Styles (FROM dashboard.html, moved here) */
+.dashboard-container {
+    text-align: center;
+    padding: 50px;
+    background-color: rgba(30, 20, 10, 0.8); /* Dark brown, semi-transparent */
+    border-radius: 15px;
+    box-shadow: 0 15px 30px rgba(0,0,0,0.5); /* Stronger shadow */
+    max-width: 600px;
+    margin: auto;
+    animation: fadeIn 1s ease-out;
+    border: 1px solid rgba(184, 134, 11, 0.5); /* Subtle gold/brass border */
+    backdrop-filter: blur(8px); /* Increased blur for frosted glass effect */
+    -webkit-backdrop-filter: blur(8px);
+    color: #fdfaf6; /* Lighter text color for readability */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.dashboard-container h2 {
+    color: #daa520; /* Gold color for headings */
+    margin-bottom: 20px;
+}
+
+.dashboard-container p {
+    font-size: 1.1em;
+    color: #fdfaf6; /* Lighter color for paragraph text */
+    margin-bottom: 30px;
+}
+
+.dashboard-container button {
+    background-color: #8b0000; /* Deep burgundy for logout button */
+    color: white; /* Ensure text is white */
+    border: none; /* Remove border */
+    padding: 12px 25px; /* Adjust padding */
+    border-radius: 8px; /* Consistent border-radius */
+    font-weight: 600; /* Consistent font-weight */
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3); /* Button shadow */
+    margin-top: 20px; /* Consistent margin */
+}
+
+.dashboard-container button:hover {
+    background-color: #660000; /* Darker burgundy on hover */
+    transform: translateY(-2px);
+}
