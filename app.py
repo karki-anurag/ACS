@@ -7,8 +7,9 @@ import psycopg2
 import secrets
 import smtplib
 from email.message import EmailMessage
-from datetime import datetime, timedelta # Import timedelta
-import pytz # Import pytz for timezone aware datetime
+from datetime import datetime, timedelta
+import pytz
+import requests # <--- NEW: Import requests library
 
 app = Flask(__name__)
 CORS(app)
@@ -21,6 +22,10 @@ DB_NAME = "anurag"
 GMAIL_USER = "anuragkarki2004@gmail.com"
 GMAIL_APP_PASSWORD = "zbsmjsqdvuymkbth"
 
+# <--- NEW: Cloudflare Turnstile Secret Key (replace with your actual secret key)
+# Get this from your Cloudflare Turnstile dashboard for your site.
+CLOUDFLARE_SECRET_KEY = "0x4AAAAAABho5r4yvWGIVblav4Dx0tdTAGk" # <<--- IMPORTANT: REPLACE THIS!
+
 OTP_STORE = {}
 
 def db_conn():
@@ -31,7 +36,7 @@ def db_conn():
         dbname=DB_NAME
     )
 
-def send_email(to_email, subject, content): # Generalized email function
+def send_email(to_email, subject, content):
     msg = EmailMessage()
     msg.set_content(content)
     msg["Subject"] = subject
@@ -47,16 +52,43 @@ def send_email(to_email, subject, content): # Generalized email function
         print(f"Email failed to {to_email}:", e)
         return False
 
-def send_otp_email(to_email, otp_code): # Existing OTP email function, now uses send_email
+def send_otp_email(to_email, otp_code):
     subject = "Library Login OTP"
     content = f"Your OTP is: {otp_code}"
     return send_email(to_email, subject, content)
 
-# New: Send Password Reset Email Function
 def send_password_reset_email(to_email, reset_link):
     subject = "Library System Password Reset Request"
     content = f"You requested a password reset. Click the following link to reset your password:\n\n{reset_link}\n\nThis link will expire in 1 hour."
     return send_email(to_email, subject, content)
+
+# <--- NEW: Function to verify Cloudflare Turnstile token
+def verify_turnstile(token):
+    if not token:
+        print("Turnstile token is missing.")
+        return False
+
+    try:
+        response = requests.post(
+            "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+            data={
+                "secret": CLOUDFLARE_SECRET_KEY,
+                "response": token
+            }
+        )
+        result = response.json()
+        if result.get("success"):
+            print("Turnstile verification successful.")
+            return True
+        else:
+            print(f"Turnstile verification failed: {result.get('error-codes')}")
+            return False
+    except requests.exceptions.RequestException as e:
+        print(f"Error connecting to Cloudflare Turnstile API: {e}")
+        return False
+    except ValueError as e: # For JSON decoding errors
+        print(f"Failed to decode Turnstile API response: {e}")
+        return False
 
 
 @app.route('/')
@@ -68,6 +100,11 @@ def register():
     data = request.get_json()
     email = data['email']
     password = data['password']
+    turnstile_token = data.get('turnstile_token') # <--- NEW: Get token from request
+
+    # <--- NEW: Validate Turnstile token
+    if not verify_turnstile(turnstile_token):
+        return jsonify({"error": "CAPTCHA verification failed. Please try again."}), 400
 
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
@@ -99,6 +136,11 @@ def login():
     data = request.get_json()
     email = data['email']
     password = data['password']
+    turnstile_token = data.get('turnstile_token') # <--- NEW: Get token from request
+
+    # <--- NEW: Validate Turnstile token
+    if not verify_turnstile(turnstile_token):
+        return jsonify({"error": "CAPTCHA verification failed. Please try again."}), 400
 
     try:
         conn = db_conn()
@@ -248,6 +290,7 @@ def reset_password():
     finally:
         if conn:
             conn.close()
+
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

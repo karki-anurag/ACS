@@ -1,13 +1,15 @@
-// Helper function to display errors
+// js/login.js
+
+// Helper function to display login errors (optional, similar to auth.js)
 function displayLoginError(message) {
-    const errorMessageElement = document.getElementById("loginErrorMessage");
+    const errorMessageElement = document.getElementById("loginErrorMessage"); // Assuming you add this ID in index.html
     if (errorMessageElement) {
         errorMessageElement.textContent = "❌ " + message;
         errorMessageElement.style.display = "block";
     }
 }
 
-// Helper function to clear login errors
+// Helper function to clear login errors (optional)
 function clearLoginError() {
     const errorMessageElement = document.getElementById("loginErrorMessage");
     if (errorMessageElement) {
@@ -16,62 +18,61 @@ function clearLoginError() {
     }
 }
 
-// Helper function to display OTP errors
-function displayOtpError(message) {
-    const errorMessageElement = document.getElementById("otpErrorMessage");
-    if (errorMessageElement) {
-        errorMessageElement.textContent = "❌ " + message;
-        errorMessageElement.style.display = "block";
-    }
-}
-
-// Helper function to clear OTP errors
-function clearOtpError() {
-    const errorMessageElement = document.getElementById("otpErrorMessage");
-    if (errorMessageElement) {
-        errorMessageElement.textContent = "";
-        errorMessageElement.style.display = "none";
-    }
-}
 
 async function loginUser(event) {
   event.preventDefault();
-  clearLoginError(); // Clear previous errors
+  clearLoginError(); // Clear previous errors (if implemented)
+
   const email = document.getElementById("login_email").value;
   const password = document.getElementById("login_password").value;
+  // --- NEW/UPDATED: Get the Turnstile token ---
+  const turnstileToken = document.querySelector('[name="cf-turnstile-response"]').value;
 
-  // Show OTP section immediately and disable login form
-  document.getElementById("otpSection").style.display = "block";
-  document.getElementById("loginForm").style.pointerEvents = "none";
-  document.getElementById("otpMessage").textContent = "Sending OTP...";
+  // --- NEW/UPDATED: Check if Turnstile token is present ---
+  if (!turnstileToken) {
+      displayLoginError("Please complete the CAPTCHA challenge."); // Use display function
+      if (typeof turnstile !== 'undefined') {
+          turnstile.reset();
+      }
+      return;
+  }
 
   try {
     const response = await fetch("http://127.0.0.1:5000/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      // --- NEW/UPDATED: Include the Turnstile token in the request body ---
+      body: JSON.stringify({ email, password, turnstile_token: turnstileToken }),
     });
 
     const result = await response.json();
 
     if (response.ok) {
-      document.getElementById("otpMessage").textContent = result.message;
-      // The OTP section should already be visible from the line above
+      alert(result.message); // Could use a displayLoginSuccess function here
+      document.getElementById("otpSection").style.display = "block";
+      // --- NEW/UPDATED: Reset Turnstile widget after successful submission ---
+      if (typeof turnstile !== 'undefined') {
+           turnstile.reset();
+      }
     } else {
-      displayLoginError(result.error || "Login failed."); // Use display function
-      document.getElementById("otpSection").style.display = "none"; // Hide on error
-      document.getElementById("loginForm").style.pointerEvents = "auto";
+      displayLoginError(result.error); // Use display function
+       // --- NEW/UPDATED: Reset Turnstile widget on failure ---
+      if (typeof turnstile !== 'undefined') {
+           turnstile.reset();
+      }
     }
   } catch (err) {
-    displayLoginError("Error connecting to backend."); // Use display function
+    displayLoginError("Error connecting to backend or an unknown error occurred.");
     console.error(err);
-    document.getElementById("otpSection").style.display = "none"; // Hide on network error
-    document.getElementById("loginForm").style.pointerEvents = "auto";
+     // --- NEW/UPDATED: Reset Turnstile widget on error ---
+    if (typeof turnstile !== 'undefined') {
+         turnstile.reset();
+    }
   }
 }
 
 async function verifyOTP() {
-  clearOtpError(); // Clear previous OTP errors
+  // Ensure the email is still accessible, or pass it from loginUser
   const email = document.getElementById("login_email").value;
   const otp = document.getElementById("otp").value;
 
@@ -85,13 +86,13 @@ async function verifyOTP() {
     const result = await response.json();
 
     if (response.ok) {
-      alert("✅ Login Successful! Redirecting to dashboard..."); // Still using alert for success
-      // window.location.href = 'dashboard.html'; // Redirect to dashboard
+      alert("✅ Login Successful!");
+      window.location.href = 'dashboard.html'; // Redirect to dashboard
     } else {
-      displayOtpError(result.error || "OTP verification failed."); // Use display function
+      alert("❌ " + result.error);
     }
   } catch (err) {
-    displayOtpError("Error verifying OTP."); // Use display function
+    alert("❌ Error verifying OTP.");
     console.error(err);
   }
 }
