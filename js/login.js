@@ -1,15 +1,16 @@
 // js/login.js
 
-// Helper function to display login errors (optional, similar to auth.js)
+// Helper function to display login errors
 function displayLoginError(message) {
-    const errorMessageElement = document.getElementById("loginErrorMessage"); // Assuming you add this ID in index.html
+    const errorMessageElement = document.getElementById("loginErrorMessage");
+    // Ensure you have a <p id="loginErrorMessage" style="color: red;"></p> in your index.html
     if (errorMessageElement) {
         errorMessageElement.textContent = "❌ " + message;
         errorMessageElement.style.display = "block";
     }
 }
 
-// Helper function to clear login errors (optional)
+// Helper function to clear login errors
 function clearLoginError() {
     const errorMessageElement = document.getElementById("loginErrorMessage");
     if (errorMessageElement) {
@@ -21,16 +22,16 @@ function clearLoginError() {
 
 async function loginUser(event) {
   event.preventDefault();
-  clearLoginError(); // Clear previous errors (if implemented)
+  clearLoginError(); // Clear previous errors
 
   const email = document.getElementById("login_email").value;
   const password = document.getElementById("login_password").value;
-  // --- NEW/UPDATED: Get the Turnstile token ---
+  // Get the Turnstile token
   const turnstileToken = document.querySelector('[name="cf-turnstile-response"]').value;
 
-  // --- NEW/UPDATED: Check if Turnstile token is present ---
+  // Check if Turnstile token is present
   if (!turnstileToken) {
-      displayLoginError("Please complete the CAPTCHA challenge."); // Use display function
+      displayLoginError("Please complete the CAPTCHA challenge.");
       if (typeof turnstile !== 'undefined') {
           turnstile.reset();
       }
@@ -41,22 +42,31 @@ async function loginUser(event) {
     const response = await fetch("http://127.0.0.1:5000/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      // --- NEW/UPDATED: Include the Turnstile token in the request body ---
       body: JSON.stringify({ email, password, turnstile_token: turnstileToken }),
     });
 
     const result = await response.json();
 
     if (response.ok) {
-      alert(result.message); // Could use a displayLoginSuccess function here
+      alert(result.message);
       document.getElementById("otpSection").style.display = "block";
-      // --- NEW/UPDATED: Reset Turnstile widget after successful submission ---
+      // Reset Turnstile widget after successful submission
       if (typeof turnstile !== 'undefined') {
            turnstile.reset();
       }
     } else {
-      displayLoginError(result.error); // Use display function
-       // --- NEW/UPDATED: Reset Turnstile widget on failure ---
+      // --- NEW/UPDATED: Specific handling for password expiry ---
+      if (response.status === 403 && result.error === "Your password has expired. Please reset your password.") {
+        displayLoginError("Your password has expired. Please reset it.");
+        alert("Your password has expired. You will be redirected to the password reset page.");
+        // Redirect to the forgot password page
+        window.location.href = 'forgot_password.html'; // Make sure you have this HTML file
+      } else {
+        // General error handling
+        displayLoginError(result.error);
+      }
+      
+      // Reset Turnstile widget on failure
       if (typeof turnstile !== 'undefined') {
            turnstile.reset();
       }
@@ -64,7 +74,7 @@ async function loginUser(event) {
   } catch (err) {
     displayLoginError("Error connecting to backend or an unknown error occurred.");
     console.error(err);
-     // --- NEW/UPDATED: Reset Turnstile widget on error ---
+    // Reset Turnstile widget on error
     if (typeof turnstile !== 'undefined') {
          turnstile.reset();
     }
@@ -72,7 +82,6 @@ async function loginUser(event) {
 }
 
 async function verifyOTP() {
-  // Ensure the email is still accessible, or pass it from loginUser
   const email = document.getElementById("login_email").value;
   const otp = document.getElementById("otp").value;
 

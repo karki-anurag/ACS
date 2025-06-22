@@ -1,252 +1,139 @@
-# Library System Web Application
+# Library System Setup Guide
 
-This project is a basic web application for a Library System, demonstrating secure user registration, login with Multi-Factor Authentication (MFA), password management, and a visually appealing "library vibe" user interface.
+This guide provides instructions to set up and run the Library System application, which includes a Flask backend and a simple HTML/JavaScript frontend.
 
-## Table of Contents
+## 1. Prerequisites
 
-1.  [Features](#features)
-2.  [Technologies Used](#technologies-used)
-3.  [Project Structure](#project-structure)
-4.  [Setup and Installation](#setup-and-installation)
-    * [Database Setup](#database-setup)
-    * [Backend Setup](#backend-setup)
-    * [Frontend Setup](#frontend-setup)
-5.  [How to Run](#how-to-run)
-6.  [Screenshots (Optional)](#screenshots-optional)
-7.  [Future Enhancements (Optional)](#future-enhancements-optional)
+Before you begin, ensure you have the following installed:
 
-## 1. Features
+* **Python 3.x**: Download from [python.org](https://www.python.org/downloads/)
+* **pip**: Python's package installer (usually comes with Python)
+* **PostgreSQL**: Database server. Download from [postgresql.org](https://www.postgresql.org/download/)
+* **Internet Connection**: Required for Cloudflare Turnstile verification and sending emails.
 
-This system comes equipped with several modern security and usability features:
+## 2. Backend Setup (Python Application)
 
-* **User Registration:**
-    * New users can sign up with an email and password.
-    * Includes a **Password Policy** with a live strength indicator during registration (checks for length, uppercase, lowercase, numbers, and special characters).
-    * Integrated **Cloudflare Turnstile** CAPTCHA for bot protection.
-* **User Login with MFA (Multi-Factor Authentication):**
-    * Users log in with their email and password.
-    * A **One-Time Password (OTP)** is sent to their registered email for secondary authentication.
-    * The OTP must be verified to gain access.
-    * Integrated **Cloudflare Turnstile** CAPTCHA.
-* **Secure Password Storage:**
-    * All user passwords are securely stored using **Bcrypt hashing**, ensuring that original passwords are never stored in plain text.
-* **Forgot Password Functionality:**
-    * Users can request a password reset if they forget their password.
-    * A unique, time-limited password reset link is sent to their registered email.
-    * Allows users to set a new password securely through the provided link.
-* **Consistent User Interface:**
-    * The application features a dark, rich "library vibe" aesthetic across all pages (login, registration, dashboard, forgot password, reset password) for a cohesive user experience.
-* **Dashboard:**
-    * A simple dashboard page that a user reaches after successful login.
+1.  **Navigate to your project directory:**
+    Open your terminal or command prompt and go to the folder where your `app.py` and other project files are located.
 
-## 2. Technologies Used
-
-* **Backend:**
-    * **Python 3:** Core programming language.
-    * **Flask:** Web framework for building the API.
-    * **Flask-CORS:** For handling Cross-Origin Resource Sharing.
-    * **Psycopg2:** PostgreSQL adapter for Python.
-    * **Bcrypt:** For secure password hashing.
-    * **smtplib:** Python's standard library for sending emails (for OTP and password reset links).
-    * **Secrets:** For generating cryptographically strong random numbers (for OTP and tokens).
-    * **Datetime & pytz:** For handling timestamps and timezone-aware dates for token expiration.
-* **Frontend:**
-    * **HTML5:** Structure of web pages.
-    * **CSS3:** Styling and "library vibe" theme.
-    * **JavaScript (ES6+):** Client-side logic for form handling, API calls, and real-time feedback (e.g., password strength).
-    * **Cloudflare Turnstile:** CAPTCHA service.
-    * **Google Fonts (Poppins):** For modern typography.
-* **Database:**
-    * **PostgreSQL:** Relational database for storing user and token information.
-
-## 3. Project Structure
-# Library System Web Application
-
-This project is a basic web application for a Library System, demonstrating secure user registration, login with Multi-Factor Authentication (MFA), password management, and a visually appealing "library vibe" user interface.
-
-## Table of Contents
-
-1.  [Features](#features)
-2.  [Technologies Used](#technologies-used)
-3.  [Project Structure](#project-structure)
-4.  [Setup and Installation](#setup-and-installation)
-    * [Database Setup](#database-setup)
-    * [Backend Setup](#backend-setup)
-    * [Frontend Setup](#frontend-setup)
-5.  [How to Run](#how-to-run)
-6.  [Screenshots (Optional)](#screenshots-optional)
-7.  [Future Enhancements (Optional)](#future-enhancements-optional)
-
-## 1. Features
-
-This system comes equipped with several modern security and usability features:
-
-* **User Registration:**
-    * New users can sign up with an email and password.
-    * Includes a **Password Policy** with a live strength indicator during registration (checks for length, uppercase, lowercase, numbers, and special characters).
-    * Integrated **Cloudflare Turnstile** CAPTCHA for bot protection.
-* **User Login with MFA (Multi-Factor Authentication):**
-    * Users log in with their email and password.
-    * A **One-Time Password (OTP)** is sent to their registered email for secondary authentication.
-    * The OTP must be verified to gain access.
-    * Integrated **Cloudflare Turnstile** CAPTCHA.
-* **Secure Password Storage:**
-    * All user passwords are securely stored using **Bcrypt hashing**, ensuring that original passwords are never stored in plain text.
-* **Forgot Password Functionality:**
-    * Users can request a password reset if they forget their password.
-    * A unique, time-limited password reset link is sent to their registered email.
-    * Allows users to set a new password securely through the provided link.
-* **Consistent User Interface:**
-    * The application features a dark, rich "library vibe" aesthetic across all pages (login, registration, dashboard, forgot password, reset password) for a cohesive user experience.
-* **Dashboard:**
-    * A simple dashboard page that a user reaches after successful login.
-
-## 2. Technologies Used
-
-* **Backend:**
-    * **Python 3:** Core programming language.
-    * **Flask-CORS:** For handling Cross-Origin Resource Sharing.
-    * **Psycopg2:** PostgreSQL adapter for Python.
-    * **Bcrypt:** For secure password hashing.
-    * **smtplib:** Python's standard library for sending emails (for OTP and password reset links).
-    * **Secrets:** For generating cryptographically strong random numbers (for OTP and tokens).
-    * **Datetime & pytz:** For handling timestamps and timezone-aware dates for token expiration.
-* **Frontend:**
-    * **HTML5:** Structure of web pages.
-    * **CSS3:** Styling and "library vibe" theme.
-    * **JavaScript (ES6+):** Client-side logic for form handling, API calls, and real-time feedback (e.g., password strength).
-    * **Cloudflare Turnstile:** CAPTCHA service.
-    * **Google Fonts (Poppins):** For modern typography.
-* **Database:**
-    * **PostgreSQL:** Relational database for storing user and token information.
-
-## 3. Project Structure
-├── app.py                  # backend using Python
-├── requirements.txt        # Python dependencies
-├── index.html              # Login page
-├── register.html           # User registration page
-├── dashboard.html          # User dashboard after successful login
-├── forgot_password.html    # Page to request password reset email
-├── reset_password.html     # Page to set a new password using a token
-├── css/
-│   └── style.css           # All application-wide CSS for the "library vibe"
-├── js/
-│   ├── auth.js             # JavaScript for user registration (register.html)
-│   ├── login.js            # JavaScript for user login and OTP verification (index.html)
-│   ├── password.js         # JavaScript for password strength indicator (register.html)
-│   ├── forgot_password.js  # JavaScript for forgot password request (forgot_password.html)
-│   └── reset_password.js   # JavaScript for password reset functionality (reset_password.html)
-└── static/
-└── images/
-└── background.jpg  # Background image for the library theme
-
-## 4. Setup and Installation
-
-Follow these steps to get the project running on your local machine.
-
-### Database Setup
-
-1.  **Install PostgreSQL:** If you don't have PostgreSQL installed, download and install it from [postgresql.org](https://www.postgresql.org/download/).
-2.  **Create a Database:**
-    Open your PostgreSQL client (e.g., `psql` in terminal, or pgAdmin) and create a new database. For this project, the database name is `anurag`.
-    ```sql
-    CREATE DATABASE anurag;
-    ```
-3.  **Create Tables:**
-    Connect to your `anurag` database and run the following SQL queries to create the necessary tables:
-
-    ```sql
-    -- Create users table
-    CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        email VARCHAR(255) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL
-    );
-
-    -- Create password_resets table
-    CREATE TABLE IF NOT EXISTS password_resets (
-        token VARCHAR(255) PRIMARY KEY,
-        user_email VARCHAR(255) NOT NULL,
-        expires_at TIMESTAMP NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
-    );
-    ```
-    **Note:** Ensure the `DB_USER` and `DB_PASSWORD` in `app.py` match your PostgreSQL user credentials. The default in `app.py` is `DB_USER = "karki"` and `DB_PASSWORD = "karkisir123"`.
-
-### Backend Setup
-
-1.  **Clone the repository** (if applicable) or ensure you have all project files.
-2.  **Navigate to the project root directory** in your terminal.
-3.  **Create a Virtual Environment** (recommended):
+2.  **Install Python Dependencies:**
+    It's highly recommended to use a virtual environment.
     ```bash
     python -m venv venv
+    # On Windows
+    .\venv\Scripts\activate
+    # On macOS/Linux
+    source venv/bin/activate
     ```
-4.  **Activate the Virtual Environment:**
-    * **Windows:** `.\venv\Scripts\activate`
-    * **macOS/Linux:** `source venv/bin/activate`
-5.  **Install Dependencies:**
-    Install the required Python packages using `pip`:
+    Then, install the required Python libraries:
     ```bash
-    pip install -r requirements.txt
+    pip install Flask Flask-Cors bcrypt psycopg2-binary requests pytz
     ```
-    Your `requirements.txt` should contain:
+    *(Note: `psycopg2-binary` is used for simplicity, for production consider `psycopg2` and its system dependencies)*
+
+3.  **Configure `app.py`:**
+    Open `app.py` and update the following configuration variables:
+    * **Database Credentials:**
+        ```python
+        DB_USER = "karki" # Your PostgreSQL username
+        DB_PASSWORD = "karkisir123" # Your PostgreSQL password
+        DB_HOST = "localhost"
+        DB_NAME = "anurag" # The name of your database (will be created later)
+        ```
+    * **Gmail Credentials (for OTP and Password Reset emails):**
+        ```python
+        GMAIL_USER = "your_email@gmail.com" # Your Gmail address
+        GMAIL_APP_PASSWORD = "your_gmail_app_password" # Generated from Google Account Security
+        ```
+        * **Important for Gmail App Password**: If you use 2-Step Verification on your Gmail, you'll need to generate an "App password" for this application instead of using your regular Gmail password. Go to your Google Account > Security > App passwords.
+    * **Cloudflare Turnstile Secret Key:**
+        ```python
+        CLOUDFLARE_SECRET_KEY = "0x4AAAAAABho5hPgTPE5grJYO_YOUR_SECRET_KEY" # <<--- Get this from Cloudflare Dashboard
+        ```
+        * **Important**: Log in to your Cloudflare account, go to your Turnstile dashboard, and get the **Secret Key** associated with the site key you are using in `index.html` and `register.html` (`0x4AAAAAABho5hPgTPE5grJY`). This is crucial for CAPTCHA verification.
+
+## 3. Database Setup (PostgreSQL)
+
+1.  **Connect to PostgreSQL:**
+    Open your PostgreSQL command-line tool (e.g., `psql`) or a GUI tool (e.g., pgAdmin). Connect as a superuser or the `DB_USER` you configured.
+
+2.  **Create the Database:**
+    ```sql
+    CREATE DATABASE anurag; -- Use the DB_NAME you configured in app.py
     ```
-    Flask
-    Flask-Cors
-    bcrypt
-    psycopg2-binary
-    pytz
-    ```
-6.  **Configure Email Settings:**
-    Open `app.py` and update the following lines with your Gmail credentials:
-    ```python
-    GMAIL_USER = "your_email@gmail.com"      # Your Gmail address
-    GMAIL_APP_PASSWORD = "your_app_password" # Generated App Password for Gmail
-    ```
-    **Important:** You need to generate an "App password" for your Gmail account, as direct login with your regular password is often blocked for security reasons. Refer to [Google's help page](https://support.google.com/accounts/answer/185833?hl=en) for instructions on how to generate one.
 
-### Frontend Setup
+3.  **Create Tables:**
+    Connect to the newly created database (`anurag`). Then, run the following SQL commands to create the necessary tables:
 
-1.  No special installation is required for the frontend. You just need to serve the HTML files.
-2.  Ensure your `static/images/background.jpg` file exists for the "library vibe" background.
+    * **`users` table:**
+        ```sql
+        CREATE TABLE users (
+            id SERIAL PRIMARY KEY,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+            last_password_change TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+        ```
 
-## 5. How to Run
+    * **`password_history` table:**
+        ```sql
+        CREATE TABLE password_history (
+            id SERIAL PRIMARY KEY,
+            email VARCHAR(255) NOT NULL REFERENCES users(email) ON DELETE CASCADE,
+            password VARCHAR(255) NOT NULL,
+            changed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+        );
+        ```
 
-Follow these steps to start both the backend and frontend servers:
+    * **`password_resets` table (for forgot password functionality):**
+        ```sql
+        CREATE TABLE password_resets (
+            id SERIAL PRIMARY KEY,
+            token VARCHAR(255) UNIQUE NOT NULL,
+            user_email VARCHAR(255) NOT NULL REFERENCES users(email) ON DELETE CASCADE,
+            expires_at TIMESTAMP WITH TIME ZONE NOT NULL
+        );
+        ```
 
-1.  **Start the Backend Server (Flask API):**
-    Open a new terminal window, navigate to your project's root directory, activate your virtual environment, and run:
-    ```bash
-    # (Ensure virtual environment is activated)
-    python app.py
-    ```
-    The backend will typically run on `http://127.0.0.1:5000/`.
+## 4. Frontend Setup
 
-2.  **Start the Frontend Server (HTML/JavaScript):**
-    Open *another* new terminal window, navigate to your project's root directory, and run a simple HTTP server:
+The frontend consists of static HTML, CSS, and JavaScript files. You just need a simple HTTP server to serve them.
+
+1.  **Navigate to your project root directory** (where `index.html` and `register.html` are located).
+
+2.  **Start a simple Python HTTP server:**
     ```bash
     python -m http.server 8000
     ```
-    The frontend will be accessible at `http://localhost:8000/`.
+    This will serve your frontend files at `http://localhost:8000`.
 
-3.  **Access the Application:**
-    Open your web browser and navigate to:
-    * **Login Page:** `http://localhost:8000/index.html`
-    * **Registration Page:** `http://localhost:8000/register.html`
+## 5. Running the Application
 
-## 6. Screenshots (Optional)
+1.  **Start the Flask Backend:**
+    Open a *new* terminal or command prompt (keep the frontend server terminal open).
+    Navigate to your project directory and activate your virtual environment (if you created one).
+    ```bash
+    # On Windows
+    .\venv\Scripts\activate
+    # On macOS/Linux
+    source venv/bin/activate
+    ```
+    Then run your Flask application:
+    ```bash
+    python app.py
+    ```
+    The Flask server should start, usually on `http://127.0.0.1:5000` (or `http://localhost:5000`).
 
-*(You can add screenshots of your login, register, and dashboard pages here to give a visual overview of your project.)*
+2.  **Access the Frontend:**
+    Open your web browser and go to:
+    * **Register:** `http://localhost:8000/register.html`
+    * **Login:** `http://localhost:8000/index.html`
 
-## 7. Future Enhancements (Optional)
+## Troubleshooting
 
-* Add user session management (e.g., using Flask-Login).
-* Implement a proper user dashboard with library functionalities (e.g., Browse books, borrowing, returning).
-* Add admin panel for managing users and books.
-* Improve frontend error handling and user feedback.
-* Integrate proper logging for backend activities.
-* More robust password policy enforcement on the backend.
-* Implement a rate-limiting mechanism for login attempts and OTP requests.
-
----
+* **"CAPTCHA verification failed."**: Double-check your `CLOUDFLARE_SECRET_KEY` in `app.py`. Ensure it's the correct Secret Key from your Cloudflare dashboard and matches the Site Key used in your HTML.
+* **Email Sending Issues**: Verify `GMAIL_USER` and `GMAIL_APP_PASSWORD`. If you're using 2-Step Verification for Gmail, you *must* use an App Password. Check your Flask server console for email-related errors.
+* **Database Connection Errors**: Ensure PostgreSQL is running, your `DB_USER` and `DB_PASSWORD` are correct, and the `anurag` database exists with the correct tables.
+* **`requests` library not found**: Run `pip install requests`.
+* **CSS/JS not loading**: Ensure the `css` and `js` folders are in the same directory as your `index.html` and `register.html` files, and that the file paths in your HTML (e.g., `href="css/style.css"`, `src="js/login.js"`) are correct.

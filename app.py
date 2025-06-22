@@ -1,5 +1,3 @@
-# app.py
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import bcrypt
@@ -8,23 +6,24 @@ import secrets
 import smtplib
 from email.message import EmailMessage
 from datetime import datetime, timedelta
-import pytz
-import requests # <--- NEW: Import requests library
+import pytz # Import pytz for timezone aware datetime
+import requests # Import requests library for Turnstile verification
 
 app = Flask(__name__)
 CORS(app)
 
+# Database Credentials - IMPORTANT: Update these with your actual details
 DB_USER = "karki"
 DB_PASSWORD = "karkisir123"
 DB_HOST = "localhost"
 DB_NAME = "anurag"
 
+# Email Credentials - IMPORTANT: Update these
 GMAIL_USER = "anuragkarki2004@gmail.com"
-GMAIL_APP_PASSWORD = "zbsmjsqdvuymkbth"
+GMAIL_APP_PASSWORD = "zbsmjsqdvuymkbth" # Use an App Password if 2FA is enabled on Gmail
 
-# <--- NEW: Cloudflare Turnstile Secret Key (replace with your actual secret key)
-# Get this from your Cloudflare Turnstile dashboard for your site.
-CLOUDFLARE_SECRET_KEY = "0x4AAAAAABho5r4yvWGIVblav4Dx0tdTAGk" # <<--- IMPORTANT: REPLACE THIS!
+# Cloudflare Turnstile Secret Key - IMPORTANT: Update this with YOUR SECRET KEY
+CLOUDFLARE_SECRET_KEY = "0x4AAAAAABho5r4yvWGIVblav4Dx0tdTAGk" # <<--- REPLACE THIS WITH YOUR ACTUAL SECRET KEY!
 
 OTP_STORE = {}
 
@@ -62,7 +61,7 @@ def send_password_reset_email(to_email, reset_link):
     content = f"You requested a password reset. Click the following link to reset your password:\n\n{reset_link}\n\nThis link will expire in 1 hour."
     return send_email(to_email, subject, content)
 
-# <--- NEW: Function to verify Cloudflare Turnstile token
+# Function to verify Cloudflare Turnstile token
 def verify_turnstile(token):
     if not token:
         print("Turnstile token is missing.")
@@ -90,6 +89,19 @@ def verify_turnstile(token):
         print(f"Failed to decode Turnstile API response: {e}")
         return False
 
+# --- Helper to check password history ---
+def is_password_reused(email, new_password, cursor):
+    """Checks if the new_password is among the last 3 used by the user."""
+    cursor.execute(
+        "SELECT password FROM password_history WHERE email = %s ORDER BY changed_at DESC LIMIT 3",
+        (email,)
+    )
+    rows = cursor.fetchall()
+    for old_hashed_password in rows:
+        if bcrypt.checkpw(new_password.encode('utf-8'), old_hashed_password[0].encode('utf-8')):
+            return True
+    return False
+
 
 @app.route('/')
 def home():
@@ -98,11 +110,11 @@ def home():
 @app.route('/register', methods=['POST'])
 def register():
     data = request.get_json()
-    email = data['email']
-    password = data['password']
-    turnstile_token = data.get('turnstile_token') # <--- NEW: Get token from request
+    email = data.get('email')
+    password = data.get('password')
+    turnstile_token = data.get('turnstile_token')
 
-    # <--- NEW: Validate Turnstile token
+    # Validate Turnstile token
     if not verify_turnstile(turnstile_token):
         return jsonify({"error": "CAPTCHA verification failed. Please try again."}), 400
 
@@ -113,12 +125,37 @@ def register():
         conn = db_conn()
         cursor = conn.cursor()
 
+        # Check if email already registered
         cursor.execute("SELECT 1 FROM users WHERE email = %s", (email,))
         if cursor.fetchone():
             return jsonify({"error": "Email already registered"}), 409
 
+        # --- Check password reuse during registration ---
+        # First, check if the user exists to get their password history.
+        # If user doesn't exist yet, there's no history to check against.
+        # This prevents an error if password_history table is empty for new user.
+        cursor.execute("SELECT 1 FROM users WHERE email = %s", (email,))
+        user_exists_in_users = cursor.fetchone()
+        if user_exists_in_users: # Only check history if user already exists
+            if is_password_reused(email, password, cursor):
+                return jsonify({"error": "Cannot reuse last 3 passwords"}), 400
+
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-        cursor.execute("INSERT INTO users (email, password) VALUES (%s, %s)", (email, hashed))
+
+        # Insert/Update user and record last_password_change
+        # Use ON CONFLICT if you plan to re-register existing emails for some reason,
+        # otherwise a simple INSERT is fine if you've already checked for existence.
+        cursor.execute("""
+            INSERT INTO users (email, password, created_at, last_password_change)
+            VALUES (%s, %s, NOW(), NOW())
+            ON CONFLICT (email) DO UPDATE SET password = EXCLUDED.password, last_password_change = NOW()
+        """, (email, hashed))
+
+        # Record password in history
+        cursor.execute("""
+            INSERT INTO password_history (email, password, changed_at)
+            VALUES (%s, %s, NOW())
+        """, (email, hashed))
 
         conn.commit()
         return jsonify({"message": "✅ Registered successfully!"}), 200
@@ -134,22 +171,35 @@ def register():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    email = data['email']
-    password = data['password']
-    turnstile_token = data.get('turnstile_token') # <--- NEW: Get token from request
+    email = data.get('email')
+    password = data.get('password')
+    turnstile_token = data.get('turnstile_token')
 
-    # <--- NEW: Validate Turnstile token
+    # Validate Turnstile token
     if not verify_turnstile(turnstile_token):
         return jsonify({"error": "CAPTCHA verification failed. Please try again."}), 400
 
     try:
         conn = db_conn()
         cursor = conn.cursor()
-        cursor.execute("SELECT password FROM users WHERE email = %s", (email,))
+        # Retrieve password AND last_password_change
+        cursor.execute("SELECT password, last_password_change FROM users WHERE email = %s", (email,))
         result = cursor.fetchone()
 
         if not result or not bcrypt.checkpw(password.encode('utf-8'), result[0].encode('utf-8')):
             return jsonify({"error": "Invalid credentials"}), 401
+
+        user_hashed_password, last_password_change = result
+
+        # --- NEW: Check for 90-day password expiry ---
+        utc_now = datetime.now(pytz.utc)
+        # Ensure last_password_change is timezone-aware for correct comparison
+        # Assuming last_password_change from DB is UTC or converted to UTC without tzinfo for simplicity
+        if last_password_change.tzinfo is None:
+            last_password_change = pytz.utc.localize(last_password_change)
+
+        if (utc_now - last_password_change) > timedelta(days=90):
+            return jsonify({"error": "Your password has expired. Please reset your password."}), 403
 
         otp = str(secrets.randbelow(1000000)).zfill(6)
         OTP_STORE[email] = otp
@@ -170,16 +220,14 @@ def login():
 @app.route('/verify-otp', methods=['POST'])
 def verify_otp():
     data = request.get_json()
-    email = data['email']
-    otp = data['otp']
+    email = data.get('email')
+    otp = data.get('otp')
 
     if OTP_STORE.get(email) == otp:
         del OTP_STORE[email] # OTP consumed
         return jsonify({"message": "✅ Login Successful!"}), 200
     else:
         return jsonify({"error": "Invalid OTP"}), 401
-
-# --- New Forgot Password functionality ---
 
 @app.route('/forgot-password-request', methods=['POST'])
 def forgot_password_request():
@@ -193,32 +241,24 @@ def forgot_password_request():
         conn = db_conn()
         cursor = conn.cursor()
 
-        # Check if email exists
         cursor.execute("SELECT email FROM users WHERE email = %s", (email,))
         user_exists = cursor.fetchone()
         if not user_exists:
-            # For security, don't confirm if email exists or not
             return jsonify({"message": "If the email is registered, a password reset link has been sent."}), 200
 
-        # Generate a unique token
-        token = secrets.token_urlsafe(32) # Generate a secure URL-safe token
+        token = secrets.token_urlsafe(32)
         
-        # Set expiration time (e.g., 1 hour from now)
-        # Make datetime objects timezone-aware to avoid comparison issues with PostgreSQL
         utc_now = datetime.now(pytz.utc)
         expires_at = utc_now + timedelta(hours=1)
 
-        # Store token in database
         cursor.execute(
             "INSERT INTO password_resets (token, user_email, expires_at) VALUES (%s, %s, %s)",
             (token, email, expires_at)
         )
         conn.commit()
 
-        # Construct the reset link (adjust 'http://localhost:8000' to your frontend URL)
         reset_link = f"http://localhost:8000/reset_password.html?token={token}"
 
-        # Send email with reset link
         if send_password_reset_email(email, reset_link):
             return jsonify({"message": "If the email is registered, a password reset link has been sent."}), 200
         else:
@@ -244,7 +284,6 @@ def reset_password():
         conn = db_conn()
         cursor = conn.cursor()
 
-        # Find the token and check expiration
         cursor.execute(
             "SELECT user_email, expires_at FROM password_resets WHERE token = %s",
             (token,)
@@ -256,29 +295,32 @@ def reset_password():
 
         user_email, expires_at_db = result
         
-        # Make expires_at_db timezone-aware if it's not already from the DB
-        # Assume DB stores UTC, convert to UTC timezone-aware object for comparison
         if expires_at_db.tzinfo is None:
             expires_at_db = pytz.utc.localize(expires_at_db)
 
         utc_now = datetime.now(pytz.utc)
 
         if utc_now > expires_at_db:
-            # Delete expired token
             cursor.execute("DELETE FROM password_resets WHERE token = %s", (token,))
             conn.commit()
             return jsonify({"error": "Invalid or expired token."}), 400
 
-        # Hash new password
+        # --- NEW: Check password reuse during password reset ---
+        if is_password_reused(user_email, new_password, cursor):
+            return jsonify({"error": "Cannot reuse last 3 passwords"}), 400
+
         hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-        # Update user's password
         cursor.execute(
-            "UPDATE users SET password = %s WHERE email = %s",
+            "UPDATE users SET password = %s, last_password_change = NOW() WHERE email = %s", # <--- UPDATED: Set last_password_change to NOW()
             (hashed_password, user_email)
         )
 
-        # Invalidate/delete the token after successful use
+        cursor.execute("""
+            INSERT INTO password_history (email, password, changed_at)
+            VALUES (%s, %s, NOW())
+        """, (user_email, hashed_password)) # <--- NEW: Add new password to history
+
         cursor.execute("DELETE FROM password_resets WHERE token = %s", (token,))
         conn.commit()
 
@@ -290,7 +332,6 @@ def reset_password():
     finally:
         if conn:
             conn.close()
-
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
