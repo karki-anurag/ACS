@@ -142,9 +142,7 @@ def register():
 
         hashed = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
-        # Insert/Update user and record last_password_change
-        # Use ON CONFLICT if you plan to re-register existing emails for some reason,
-        # otherwise a simple INSERT is fine if you've already checked for existence.
+        
         cursor.execute("""
             INSERT INTO users (email, password, created_at, last_password_change)
             VALUES (%s, %s, NOW(), NOW())
@@ -191,10 +189,8 @@ def login():
 
         user_hashed_password, last_password_change = result
 
-        # --- NEW: Check for 90-day password expiry ---
+        
         utc_now = datetime.now(pytz.utc)
-        # Ensure last_password_change is timezone-aware for correct comparison
-        # Assuming last_password_change from DB is UTC or converted to UTC without tzinfo for simplicity
         if last_password_change.tzinfo is None:
             last_password_change = pytz.utc.localize(last_password_change)
 

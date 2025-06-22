@@ -5,7 +5,7 @@ function displayLoginError(message) {
     const errorMessageElement = document.getElementById("loginErrorMessage");
     // Ensure you have a <p id="loginErrorMessage" style="color: red;"></p> in your index.html
     if (errorMessageElement) {
-        errorMessageElement.textContent = "❌ " + message;
+        errorMessageElement.textContent =  message;
         errorMessageElement.style.display = "block";
     }
 }

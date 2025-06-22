@@ -4,7 +4,7 @@
 function displayRegisterError(message) {
     const errorMessageElement = document.getElementById("registerErrorMessage");
     if (errorMessageElement) {
-        errorMessageElement.textContent = "❌ " + message;
+        errorMessageElement.textContent =  message;
         errorMessageElement.style.display = "block";
     }
     // Ensure success message is hidden if an error occurs
